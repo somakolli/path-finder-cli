@@ -7,17 +7,19 @@
 
 int main(int argc, char* argv[]) {
     std::string filepath;
+    int level = 0;
     for(int i = 1; i < argc; ++i) {
         std::string option = argv[i];
         if(option == "-f") {
             filepath = argv[++i];
         }
+        if(option == "-l")
+            level = std::stoi(argv[++i]);
     }
     std::cout << filepath << std::endl;
-    std::cout << "Hello, World!" << std::endl;
     pathFinder::CHGraph chGraph;
     pathFinder::GraphReader::readCHFmiFile(chGraph, filepath);
-    pathFinder::HubLabels hl(chGraph);
+    pathFinder::CHDijkstra hl(chGraph);
     while(true) {
         std::cout << "source: ";
         pathFinder::NodeId source;
