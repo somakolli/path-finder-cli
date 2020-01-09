@@ -4,6 +4,7 @@
 #include "vendor/path_finder/include/GraphReader.h"
 #include "vendor/path_finder/include/CHDijkstra.h"
 #include "vendor/path_finder/include/HubLabels.h"
+#include "vendor/path_finder/include/ChHlBenchmarker.h"
 
 template<typename ShopaProvider, typename ShopaProvider2>
 void loop(ShopaProvider shopa, ShopaProvider2 shopa2){
@@ -54,6 +55,8 @@ int main(int argc, char* argv[]) {
     std::cout << filepath << std::endl;
     pathFinder::CHGraph chGraph;
     pathFinder::GraphReader::readCHFmiFile(chGraph, filepath);
+    pathFinder::ChHlBenchmarker bm(chGraph);
+    bm.compareSpeed("hl-ram.bench");
     switch(method){
         case hl:{
             pathFinder::HubLabels hl(chGraph, level);
