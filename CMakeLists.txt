@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(master_arbeit)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(vendor/path_finder)
 
