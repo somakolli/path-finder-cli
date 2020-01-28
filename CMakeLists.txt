@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.13.4)
 project(master_arbeit)
 
 set(CMAKE_CXX_STANDARD 20)
