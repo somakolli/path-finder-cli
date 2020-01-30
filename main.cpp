@@ -1,5 +1,7 @@
 #include <iostream>
 #include <chrono>
+#include <fcntl.h>
+#include <fcntl.h>
 #include "vendor/path_finder/include/CHGraph.h"
 #include "vendor/path_finder/include/GraphReader.h"
 #include "vendor/path_finder/include/CHDijkstra.h"
@@ -56,7 +58,7 @@ int main(int argc, char* argv[]) {
     pathFinder::CHGraph<std::vector<pathFinder::CHNode>, std::vector<pathFinder::Edge>, std::vector<pathFinder::NodeId>> chGraph;
     pathFinder::GraphReader::readCHFmiFile(chGraph, filepath);
     pathFinder::ChHlBenchmarker bm(chGraph);
-    bm.compareSpeed("hl-ram.bench", level);
+    //bm.compareSpeed("hl-ram.bench", level);
     switch(method){
         case hl:{
             pathFinder::HubLabels<pathFinder::HubLabelStore<std::vector, pathFinder::CostNode, std::allocator<pathFinder::CostNode>>,
@@ -80,6 +82,10 @@ int main(int argc, char* argv[]) {
             ramHlStore.getBackwardLabels().shrink_to_fit();
             ramHlStore.getForwardLabels().clear();
             ramHlStore.getForwardLabels().shrink_to_fit();
+            int fd = ::open("/proc/sys/vm/drop_caches", O_WRONLY);
+            if (2 != ::write(fd, "1\n", 2)) {
+                throw std::runtime_error("Benchmarker: could not drop caches");
+            }
             loop(diskHl, pathFinder::CHDijkstra(chGraph));
             break;
     }
