@@ -35,7 +35,8 @@ int main(int argc, char* argv[]) {
     int level = 0;
     enum methodEnum{
         hl = 0,
-        ch = 1
+        ch = 1,
+        bench = 2
     };
     methodEnum method = hl;
     for(int i = 1; i < argc; ++i) {
@@ -48,9 +49,10 @@ int main(int argc, char* argv[]) {
             std::string methodStr = argv[++i];
             if(methodStr == "ch")
                 method = ch;
-            if(methodStr == "hl"){
+            else if(methodStr == "hl"){
                 method = hl;
-            }
+            } else if(methodStr == "bench")
+                method = bench;
         }
 
     }
@@ -58,7 +60,6 @@ int main(int argc, char* argv[]) {
     pathFinder::CHGraph<std::vector<pathFinder::CHNode>, std::vector<pathFinder::Edge>, std::vector<pathFinder::NodeId>> chGraph;
     pathFinder::GraphReader::readCHFmiFile(chGraph, filepath);
     pathFinder::ChHlBenchmarker bm(chGraph);
-    //bm.compareSpeed("hl-ram.bench", level);
     switch(method){
         case hl:{
             pathFinder::HubLabels<pathFinder::HubLabelStore<std::vector, pathFinder::CostNode, std::allocator<pathFinder::CostNode>>,
@@ -69,7 +70,7 @@ int main(int argc, char* argv[]) {
             loop(hl, ch);
         }
             break;
-        case ch:
+        case ch:{
             pathFinder::HubLabels<pathFinder::HubLabelStore<std::vector, pathFinder::CostNode, std::allocator<pathFinder::CostNode>>,
                     pathFinder::CHGraph<std::vector<pathFinder::CHNode>, std::vector<pathFinder::Edge>, std::vector<pathFinder::NodeId>>>  hl(chGraph, level);
             auto& ramHlStore = hl.getHublabelStore();
@@ -87,6 +88,11 @@ int main(int argc, char* argv[]) {
                 throw std::runtime_error("Benchmarker: could not drop caches");
             }
             loop(diskHl, pathFinder::CHDijkstra(chGraph));
+            }
+
+            break;
+        case bench:
+            bm.compareSpeed("hl-ram.bench", level);
             break;
     }
     return 0;
