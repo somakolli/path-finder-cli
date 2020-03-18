@@ -27,6 +27,12 @@ void loop(ShopaProvider shopa, ShopaProvider2 shopa2){
         finish = std::chrono::high_resolution_clock::now();
         elapsed = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
         std::cout << "Elapsed time: " << elapsed.count() << " µs\n";
+        /*
+        int fd = ::open("/proc/sys/vm/drop_caches", O_WRONLY);
+        if (2 != ::write(fd, "1\n", 2)) {
+            throw std::runtime_error("Benchmarker: could not drop caches");
+        }
+         */
     }
 };
 
@@ -57,13 +63,12 @@ int main(int argc, char* argv[]) {
 
     }
     std::cout << filepath << std::endl;
-    pathFinder::CHGraph<std::vector<pathFinder::CHNode>, std::vector<pathFinder::Edge>, std::vector<pathFinder::NodeId>> chGraph;
+    pathFinder::CHGraph<std::vector> chGraph;
     pathFinder::GraphReader::readCHFmiFile(chGraph, filepath);
     pathFinder::ChHlBenchmarker bm(chGraph);
     switch(method){
         case hl:{
-            pathFinder::HubLabels<pathFinder::HubLabelStore<std::vector, pathFinder::CostNode, std::allocator<pathFinder::CostNode>>,
-            pathFinder::CHGraph<std::vector<pathFinder::CHNode>, std::vector<pathFinder::Edge>, std::vector<pathFinder::NodeId>>> hl(chGraph, level);
+            pathFinder::HubLabels<pathFinder::HubLabelStore<std::vector>, pathFinder::CHGraph<std::vector>> hl(chGraph, level);
             pathFinder::CHDijkstra ch(chGraph);
 
             //hl.writeToFile("stgtregbz.hl");
@@ -71,23 +76,29 @@ int main(int argc, char* argv[]) {
         }
             break;
         case ch:{
-            pathFinder::HubLabels<pathFinder::HubLabelStore<std::vector, pathFinder::CostNode, std::allocator<pathFinder::CostNode>>,
-                    pathFinder::CHGraph<std::vector<pathFinder::CHNode>, std::vector<pathFinder::Edge>, std::vector<pathFinder::NodeId>>>  hl(chGraph, level);
+            pathFinder::HubLabels<pathFinder::HubLabelStore<std::vector>, pathFinder::CHGraph<std::vector>>  hl(chGraph, level);
             auto& ramHlStore = hl.getHublabelStore();
-            auto diskGraph = pathFinder::CHGraph(chGraph.getNodes(), chGraph.getForwardEdges(), chGraph.getBackEdges(), chGraph.getForwardOffset(), chGraph.getBackOffset(), chGraph.numberOfNodes);
-            auto mmapForwardLabels = pathFinder::MmapVector<pathFinder::CostNode, std::allocator<pathFinder::CostNode>>(ramHlStore.getForwardLabels(), "forwardLabels");
-            auto mmapBackwardLabels = pathFinder::MmapVector<pathFinder::CostNode, std::allocator<pathFinder::CostNode>>(ramHlStore.getBackwardLabels(), "backwardLabels");
+
+            auto mmapNodes = pathFinder::MmapVector(chGraph.getNodes(), "nodes");
+            auto mmapForwardEdges = pathFinder::MmapVector(chGraph.getForwardEdges(), "forwardEdges");
+            auto mmapBackwardEdges = pathFinder::MmapVector(chGraph.getBackEdges(), "backwardEdges");
+
+            auto diskGraph = pathFinder::CHGraph(mmapNodes, mmapForwardEdges, mmapBackwardEdges, chGraph.getForwardOffset(), chGraph.getBackOffset(), chGraph.numberOfNodes);
+            auto mmapForwardLabels = pathFinder::MmapVector(ramHlStore.getForwardLabels(), "forwardLabels");
+            auto mmapBackwardLabels = pathFinder::MmapVector(ramHlStore.getBackwardLabels(), "backwardLabels");
             pathFinder::HubLabelStore diskHlStore(mmapForwardLabels, mmapBackwardLabels, ramHlStore.getForwardOffset(), ramHlStore.getBackwardOffset());
-            pathFinder::HubLabels  diskHl(chGraph, level, diskHlStore);
+            pathFinder::HubLabels  diskHl(diskGraph, level, diskHlStore);
             ramHlStore.getBackwardLabels().clear();
             ramHlStore.getBackwardLabels().shrink_to_fit();
             ramHlStore.getForwardLabels().clear();
             ramHlStore.getForwardLabels().shrink_to_fit();
+            /*
             int fd = ::open("/proc/sys/vm/drop_caches", O_WRONLY);
             if (2 != ::write(fd, "1\n", 2)) {
                 throw std::runtime_error("Benchmarker: could not drop caches");
             }
-            loop(diskHl, pathFinder::CHDijkstra(chGraph));
+             */
+            loop(diskHl, pathFinder::CHDijkstra(diskGraph));
             }
 
             break;
