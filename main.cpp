@@ -63,20 +63,22 @@ int main(int argc, char* argv[]) {
 
     }
     std::cout << filepath << std::endl;
-    pathFinder::CHGraph<std::vector> chGraph;
+    pathFinder::CHGraph chGraph;
     pathFinder::GraphReader::readCHFmiFile(chGraph, filepath);
     pathFinder::ChHlBenchmarker bm(chGraph);
+    pathFinder::Timer timer;
+
     switch(method){
         case hl:{
-            pathFinder::HubLabels<pathFinder::HubLabelStore<std::vector>, pathFinder::CHGraph<std::vector>> hl(chGraph, level);
+            pathFinder::HubLabels hl(chGraph, level, timer);
             pathFinder::CHDijkstra ch(chGraph);
-
             //hl.writeToFile("stgtregbz.hl");
+            hl.setLabelsUntilLevel(20);
             loop(hl, ch);
         }
             break;
         case ch:{
-            pathFinder::HubLabels<pathFinder::HubLabelStore<std::vector>, pathFinder::CHGraph<std::vector>>  hl(chGraph, level);
+            pathFinder::HubLabels  hl(chGraph, level, timer);
             auto& ramHlStore = hl.getHublabelStore();
 
             auto mmapNodes = pathFinder::MmapVector(chGraph.getNodes(), "nodes");
@@ -87,7 +89,7 @@ int main(int argc, char* argv[]) {
             auto mmapForwardLabels = pathFinder::MmapVector(ramHlStore.getForwardLabels(), "forwardLabels");
             auto mmapBackwardLabels = pathFinder::MmapVector(ramHlStore.getBackwardLabels(), "backwardLabels");
             pathFinder::HubLabelStore diskHlStore(mmapForwardLabels, mmapBackwardLabels, ramHlStore.getForwardOffset(), ramHlStore.getBackwardOffset());
-            pathFinder::HubLabels  diskHl(diskGraph, level, diskHlStore);
+            pathFinder::HubLabels diskHl(diskGraph, level, diskHlStore, timer);
             ramHlStore.getBackwardLabels().clear();
             ramHlStore.getBackwardLabels().shrink_to_fit();
             ramHlStore.getForwardLabels().clear();
