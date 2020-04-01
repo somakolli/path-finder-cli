@@ -6,7 +6,10 @@ set(CMAKE_CXX_STANDARD 17)
 add_subdirectory(vendor/path_finder)
 
 add_executable(master_arbeit main.cpp)
+add_executable(file_creator FileCreator.cpp)
+add_executable(run_from_files RunFromFiles.cpp)
 
 target_link_libraries(master_arbeit path_finder)
-
+target_link_libraries(file_creator path_finder)
+target_link_libraries(run_from_files path_finder)
 set(CMAKE_CXX_FLAGS "-pthread")
