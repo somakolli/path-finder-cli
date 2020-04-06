@@ -43,10 +43,13 @@ void loop(std::vector<pathFinder::PathFinderBase*> pathFinders) {
 };
 int main(int argc, char* argv[]) {
     std::string configFolder;
+    bool ram = false;
     for(int i = 1; i < argc; ++i) {
         std::string option = argv[i];
         if(option == "-f")
             configFolder = argv[++i];
+        if(option == "-ram")
+            ram = true;
     }
 
     // read config
@@ -55,21 +58,41 @@ int main(int argc, char* argv[]) {
                     std::istreambuf_iterator<char>());
     auto config = pathFinder::DataConfig::getFromFile(str);
     std::cout << "read config" << std::endl;
-    auto nodes = pathFinder::Static::getFromFileMMap<pathFinder::CHNode>(config.nodes);
-    auto forwardEdges = pathFinder::Static::getFromFileMMap<pathFinder::Edge>(config.forwardEdges);
-    auto backwardEdges = pathFinder::Static::getFromFileMMap<pathFinder::Edge>(config.backwardEdges);
-    auto forwardOffset = pathFinder::Static::getFromFile<pathFinder::NodeId>(config.forwardOffset);
-    auto backwardOffset = pathFinder::Static::getFromFile<pathFinder::NodeId>(config.backwardOffset);
-    auto forwardHublabels = pathFinder::Static::getFromFileMMap<pathFinder::CostNode>(config.forwardHublabels);
-    auto backwardHublabels = pathFinder::Static::getFromFileMMap<pathFinder::CostNode>(config.backwardHublabels);
-    auto forwardHublabelOffset = pathFinder::Static::getFromFile<pathFinder::OffsetElement>(config.forwardHublabelOffset);
-    auto backwardHublabelOffset = pathFinder::Static::getFromFile<pathFinder::OffsetElement>(config.backwardHublabelOffset);
-    pathFinder::CHGraph chGraph(nodes, forwardEdges, backwardEdges, forwardOffset, backwardOffset, config.numberOfNodes);
-    pathFinder::HubLabelStore hubLabelStore(forwardHublabels, backwardHublabels, forwardHublabelOffset, backwardHublabelOffset);
-    pathFinder::Timer timer;
-    pathFinder::HubLabels hl(chGraph, config.calculatedUntilLevel, hubLabelStore, timer);
+    if(!ram) {
+        auto nodes = pathFinder::Static::getFromFileMMap<pathFinder::CHNode>(config.nodes);
+        auto forwardEdges = pathFinder::Static::getFromFileMMap<pathFinder::Edge>(config.forwardEdges);
+        auto backwardEdges = pathFinder::Static::getFromFileMMap<pathFinder::Edge>(config.backwardEdges);
+        auto forwardOffset = pathFinder::Static::getFromFileMMap<pathFinder::NodeId>(config.forwardOffset);
+        auto backwardOffset = pathFinder::Static::getFromFileMMap<pathFinder::NodeId>(config.backwardOffset);
+        auto forwardHublabels = pathFinder::Static::getFromFileMMap<pathFinder::CostNode>(config.forwardHublabels);
+        auto backwardHublabels = pathFinder::Static::getFromFileMMap<pathFinder::CostNode>(config.backwardHublabels);
+        auto forwardHublabelOffset = pathFinder::Static::getFromFileMMap<pathFinder::OffsetElement>(config.forwardHublabelOffset);
+        auto backwardHublabelOffset = pathFinder::Static::getFromFileMMap<pathFinder::OffsetElement>(config.backwardHublabelOffset);
+        pathFinder::CHGraph chGraph(nodes, forwardEdges, backwardEdges, forwardOffset, backwardOffset, config.numberOfNodes);
+        pathFinder::HubLabelStore hubLabelStore(forwardHublabels, backwardHublabels, forwardHublabelOffset, backwardHublabelOffset);
+        pathFinder::Timer timer;
+        pathFinder::HubLabels hl(chGraph, config.calculatedUntilLevel, hubLabelStore, timer);
+
+        loop({&hl});
+    } else {
+        auto nodes = pathFinder::Static::getFromFile<pathFinder::CHNode>(config.nodes);
+        auto forwardEdges = pathFinder::Static::getFromFile<pathFinder::Edge>(config.forwardEdges);
+        auto backwardEdges = pathFinder::Static::getFromFile<pathFinder::Edge>(config.backwardEdges);
+        auto forwardOffset = pathFinder::Static::getFromFile<pathFinder::NodeId>(config.forwardOffset);
+        auto backwardOffset = pathFinder::Static::getFromFile<pathFinder::NodeId>(config.backwardOffset);
+        auto forwardHublabels = pathFinder::Static::getFromFile<pathFinder::CostNode>(config.forwardHublabels);
+        auto backwardHublabels = pathFinder::Static::getFromFile<pathFinder::CostNode>(config.backwardHublabels);
+        auto forwardHublabelOffset = pathFinder::Static::getFromFile<pathFinder::OffsetElement>(config.forwardHublabelOffset);
+        auto backwardHublabelOffset = pathFinder::Static::getFromFile<pathFinder::OffsetElement>(config.backwardHublabelOffset);
+        pathFinder::CHGraph chGraph(nodes, forwardEdges, backwardEdges, forwardOffset, backwardOffset, config.numberOfNodes);
+        pathFinder::HubLabelStore hubLabelStore(forwardHublabels, backwardHublabels, forwardHublabelOffset, backwardHublabelOffset);
+        pathFinder::Timer timer;
+        pathFinder::HubLabels hl(chGraph, config.calculatedUntilLevel, hubLabelStore, timer);
+
+        loop({&hl});
+    }
+
     //pathFinder::CHDijkstra  ch(chGraph);
-    loop({&hl});
 
 }
 

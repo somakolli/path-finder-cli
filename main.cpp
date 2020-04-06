@@ -96,7 +96,6 @@ int main(int argc, char* argv[]) {
                 auto mmapNodes = pathFinder::MmapVector(chGraph.getNodes(), "nodes");
                 auto mmapForwardEdges = pathFinder::MmapVector(chGraph.getForwardEdges(), "forwardEdges");
                 auto mmapBackwardEdges = pathFinder::MmapVector(chGraph.getBackEdges(), "backwardEdges");
-
                 auto diskGraph = pathFinder::CHGraph(mmapNodes, mmapForwardEdges, mmapBackwardEdges, chGraph.getForwardOffset(), chGraph.getBackOffset(), chGraph.numberOfNodes);
                 auto mmapForwardLabels = pathFinder::MmapVector(ramHlStore.getForwardLabels(), "forwardLabels");
                 auto mmapBackwardLabels = pathFinder::MmapVector(ramHlStore.getBackwardLabels(), "backwardLabels");
