@@ -44,6 +44,7 @@ void loop(std::vector<pathFinder::PathFinderBase*> pathFinders){
 int main(int argc, char* argv[]) {
     std::string filepath;
     int level = 0;
+    bool gridReorder = false;
     enum AlgorithmType {
         pureCH = 0,
         hybrid = 1,
@@ -79,10 +80,12 @@ int main(int argc, char* argv[]) {
             else if(memoryString == "disk")
                 memoryType = disk;
         }
+        else if(option == "-gridReorder")
+          gridReorder = true;
     }
     std::cout << filepath << std::endl;
     pathFinder::CHGraph chGraph;
-    pathFinder::GraphReader::readCHFmiFile(chGraph, filepath);
+    pathFinder::GraphReader::readCHFmiFile(chGraph, filepath, gridReorder);
     pathFinder::ChHlBenchmarker bm(chGraph);
     pathFinder::Timer timer;
 

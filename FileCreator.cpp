@@ -11,18 +11,20 @@
 int main(int argc, char* argv[]) {
     std::string filepath;
     int level = 0;
-
+    bool gridReorder = false;
     for(int i = 1; i < argc; ++i) {
         std::string option = argv[i];
         if (option == "-f")
             filepath = argv[++i];
         else if (option == "-l")
             level = std::stoi(argv[++i]);
+        else if (option == "-gridReorder")
+          gridReorder = true;
     }
 
     // read graph
     pathFinder::CHGraph chGraph;
-    pathFinder::GraphReader::readCHFmiFile(chGraph, filepath);
+    pathFinder::GraphReader::readCHFmiFile(chGraph, filepath, gridReorder);
     std::cout << "read file" << std::endl;
     std::string folderName = "data";
     std::string command = "mkdir " + folderName;
