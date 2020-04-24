@@ -58,6 +58,9 @@ int main(int argc, char* argv[]) {
                     std::istreambuf_iterator<char>());
     auto config = pathFinder::DataConfig::getFromFile(str);
     std::cout << "read config" << std::endl;
+
+
+
     if(!ram) {
         auto nodes = pathFinder::Static::getFromFileMMap<pathFinder::CHNode>(config.nodes);
         auto forwardEdges = pathFinder::Static::getFromFileMMap<pathFinder::Edge>(config.forwardEdges);
@@ -69,6 +72,14 @@ int main(int argc, char* argv[]) {
         auto forwardHublabelOffset = pathFinder::Static::getFromFileMMap<pathFinder::OffsetElement>(config.forwardHublabelOffset);
         auto backwardHublabelOffset = pathFinder::Static::getFromFileMMap<pathFinder::OffsetElement>(config.backwardHublabelOffset);
         pathFinder::CHGraph chGraph(nodes, forwardEdges, backwardEdges, forwardOffset, backwardOffset, config.numberOfNodes);
+
+        // set up grid
+        for(auto gridEntry : config.gridMapEntries) {
+            chGraph.gridMap[gridEntry.latLng] = gridEntry.pointerPair;
+        }
+
+        std::cout << "gridMap size: " << chGraph.gridMap.size() << std::endl;
+
         pathFinder::HubLabelStore hubLabelStore(forwardHublabels, backwardHublabels, forwardHublabelOffset, backwardHublabelOffset);
         pathFinder::Timer timer;
         pathFinder::HubLabels hl(chGraph, config.calculatedUntilLevel, hubLabelStore, timer);
@@ -85,6 +96,14 @@ int main(int argc, char* argv[]) {
         auto forwardHublabelOffset = pathFinder::Static::getFromFile<pathFinder::OffsetElement>(config.forwardHublabelOffset);
         auto backwardHublabelOffset = pathFinder::Static::getFromFile<pathFinder::OffsetElement>(config.backwardHublabelOffset);
         pathFinder::CHGraph chGraph(nodes, forwardEdges, backwardEdges, forwardOffset, backwardOffset, config.numberOfNodes);
+
+        // set up grid
+        for(auto gridEntry : config.gridMapEntries) {
+            chGraph.gridMap[gridEntry.latLng] = gridEntry.pointerPair;
+        }
+
+        std::cout << "gridMap size: " << chGraph.gridMap.size() << std::endl;
+
         pathFinder::HubLabelStore hubLabelStore(forwardHublabels, backwardHublabels, forwardHublabelOffset, backwardHublabelOffset);
         pathFinder::Timer timer;
         pathFinder::HubLabels hl(chGraph, config.calculatedUntilLevel, hubLabelStore, timer);

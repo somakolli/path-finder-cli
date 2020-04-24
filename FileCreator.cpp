@@ -40,6 +40,13 @@ int main(int argc, char* argv[]) {
     dataConfig.backwardEdges = {folderName + "/backwardEdges", chGraph.getBackEdges().size(), true};
     dataConfig.backwardOffset = {folderName + "/backwardOffset", chGraph.getBackOffset().size(), false};
 
+    // populate config grid map
+    for(auto [latLng, pointer]: chGraph.gridMap) {
+      dataConfig.gridMapEntries.emplace_back(pathFinder::GridMapEntry{latLng, pointer});
+
+    }
+    std::cout << "gridMap length " << chGraph.gridMap.size() << std::endl;
+
     // write graph files
     using namespace pathFinder;
     Static::writeVectorToFile(chGraph.getNodes(), dataConfig.nodes.path.c_str());
