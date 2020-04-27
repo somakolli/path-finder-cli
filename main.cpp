@@ -142,7 +142,7 @@ int main(int argc, char* argv[]) {
 
             break;
         case bench:
-            bm.compareSpeed("hl-ram.bench", level);
+            bm.compareSpeed("hl-ram.bench", level, true);
             break;
     }
     return 0;

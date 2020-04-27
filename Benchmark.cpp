@@ -20,6 +20,6 @@ int main(int argc, char* argv[]) {
   pathFinder::CHGraph chGraph;
   pathFinder::GraphReader::readCHFmiFile(chGraph, filepath, gridReorder);
   pathFinder::ChHlBenchmarker bm(chGraph);
-  bm.compareSpeed("hl-ram.bench", level);
+  bm.compareSpeed("hl-ram.bench", level, false);
   return 0;
 }
