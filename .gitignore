@@ -1,0 +1,5 @@
+build/*
+.idea/*
+.kdev4/*
+cmake-build-debug/*
+*.kdev4

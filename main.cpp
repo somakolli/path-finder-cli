@@ -1,16 +1,11 @@
-#include <iostream>
+#include <boost/iostreams/write.hpp>
 #include <chrono>
 #include <fcntl.h>
-#include <fcntl.h>
-#include "vendor/path_finder/include/CHGraph.h"
-#include "vendor/path_finder/include/GraphReader.h"
-#include "vendor/path_finder/include/CHDijkstra.h"
-#include "vendor/path_finder/include/HubLabels.h"
-#include "vendor/path_finder/include/ChHlBenchmarker.h"
-#include <cstdarg>
-
-
-
+#include <iostream>
+#include <path_finder/ChHlBenchmarker.h>
+#include <path_finder/GraphReader.h>
+#include <path_finder/PathFinderBase.h>
+#include <vector>
 
 void loop(std::vector<pathFinder::PathFinderBase*> pathFinders){
     while(true) {

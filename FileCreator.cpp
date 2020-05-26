@@ -1,12 +1,12 @@
 //
 // Created by sokol on 31.03.20.
 //
+#include "path_finder/CHGraph.h"
+#include "path_finder/DataConfig.h"
+#include "path_finder/GraphReader.h"
+#include "path_finder/HubLabels.h"
+#include "path_finder/Static.h"
 #include <string>
-#include "vendor/path_finder/include/Static.h"
-#include "vendor/path_finder/include/CHGraph.h"
-#include "vendor/path_finder/include/GraphReader.h"
-#include "vendor/path_finder/include/DataConfig.h"
-#include "vendor/path_finder/include/HubLabels.h"
 
 int main(int argc, char* argv[]) {
     std::string filepath;
