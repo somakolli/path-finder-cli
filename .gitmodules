@@ -1,3 +1,6 @@
 [submodule "vendor/path_finder"]
 	path = vendor/path_finder
 	url = https://github.com/somakolli/path_finder
+[submodule "vendor/oscar-routing"]
+	path = vendor/oscar-routing
+	url = https://github.com/dbahrdt/oscar-routing
