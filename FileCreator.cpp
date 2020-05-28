@@ -6,10 +6,14 @@
 #include "path_finder/GraphReader.h"
 #include "path_finder/HubLabels.h"
 #include "path_finder/Static.h"
+#include <path_finder/OscarIntegration.h>
+#include <liboscar/StaticOsmCompleter.h>
+#include <liboscar/routing/support/Edge2CellIds.h>
 #include <string>
 
 int main(int argc, char* argv[]) {
     std::string filepath;
+    std::string oscarFilePath;
     int level = 0;
     bool gridReorder = false;
     for(int i = 1; i < argc; ++i) {
@@ -20,12 +24,32 @@ int main(int argc, char* argv[]) {
             level = std::stoi(argv[++i]);
         else if (option == "-gridReorder")
           gridReorder = true;
+        else if (option == "-oscarFiles")
+          oscarFilePath = argv[++i];
     }
+
+  liboscar::Static::OsmCompleter cmp;
 
     // read graph
     pathFinder::CHGraph chGraph;
     pathFinder::GraphReader::readCHFmiFile(chGraph, filepath, gridReorder);
-    std::cout << "read file" << std::endl;
+
+    // read cellIds
+  pathFinder::CellIdStore<std::vector> cellIdStore(chGraph.edges.size());
+  if(!oscarFilePath.empty()) {
+    std::cout << "reading oscar files..." << std::endl;
+    cmp.setAllFilesFromPrefix(oscarFilePath);
+    try {
+      cmp.energize();
+    }
+    catch (std::exception const & e) {
+      std::cerr << "Error: " << e.what() << std::endl;
+      return -1;
+    }
+    pathFinder::OscarIntegrator::writeCellIdsForEdges<sserialize::spatial::GeoPoint>
+        (chGraph, liboscar::routing::support::Edge2CellIds(cmp.store()), pathFinder::CellIdDiskWriter(cellIdStore));
+  }
+    std::cout << "read graph file" << std::endl;
     std::string folderName = "data";
     std::string command = "mkdir " + folderName;
     system(command.c_str());
@@ -36,12 +60,13 @@ int main(int argc, char* argv[]) {
     dataConfig.numberOfNodes = chGraph.getNodes().size();
     dataConfig.numberOfEdges = chGraph.getForwardEdges().size();
 
-    dataConfig.nodes = {folderName + "/nodes", chGraph.getNodes().size(), true};
-    dataConfig.forwardEdges = {folderName + "/forwardEdges", chGraph.getForwardEdges().size(), true};
-    dataConfig.forwardOffset = {folderName + "/forwardOffset", chGraph.getForwardOffset().size(), false};
-    dataConfig.backwardEdges = {folderName + "/backwardEdges", chGraph.getBackEdges().size(), true};
-    dataConfig.backwardOffset = {folderName + "/backwardOffset", chGraph.getBackOffset().size(), false};
-
+    dataConfig.nodes = {"nodes", chGraph.getNodes().size(), true};
+    dataConfig.forwardEdges = {"forwardEdges", chGraph.getForwardEdges().size(), true};
+    dataConfig.forwardOffset = {"forwardOffset", chGraph.getForwardOffset().size(), false};
+    dataConfig.backwardEdges = {"backwardEdges", chGraph.getBackEdges().size(), true};
+    dataConfig.backwardOffset = {"backwardOffset", chGraph.getBackOffset().size(), false};
+    dataConfig.cellIds = {"cellIds", cellIdStore.cellIdSize()};
+    dataConfig.cellIdsOffset = {"cellIdsOffset", cellIdStore.offsetSize()};
     // populate config grid map
     for(auto [latLng, pointer]: chGraph.gridMap) {
       dataConfig.gridMapEntries.emplace_back(pathFinder::GridMapEntry{latLng, pointer});
@@ -57,17 +82,21 @@ int main(int argc, char* argv[]) {
     Static::writeVectorToFile(chGraph.getBackEdges(), dataConfig.backwardEdges.path.c_str());
     Static::writeVectorToFile(chGraph.getBackOffset(), dataConfig.backwardOffset.path.c_str());
 
+    // write cell ids
+    Static::writeVectorToFile(cellIdStore.cellIdsVec(), dataConfig.cellIds.path.c_str());
+    Static::writeVectorToFile(cellIdStore.offsetVec(), dataConfig.cellIdsOffset.path.c_str());
+
     // construct hub labels
     pathFinder::Timer timer;
-    pathFinder::HubLabels hubLabels(chGraph, level, timer);
+    pathFinder::HubLabels hubLabels(chGraph, level, timer, cellIdStore);
     auto& hlStore = hubLabels.getHublabelStore();
     std::cout << hlStore.getForwardLabels().size() << std::endl;
     // set hub label config values
     dataConfig.calculatedUntilLevel = level;
-    dataConfig.forwardHublabels = {folderName + "/forwardHubLabels", hlStore.getForwardLabels().size(), true};
-    dataConfig.backwardHublabels = { folderName + "/backwardHubLabels", hlStore.getBackwardLabels().size(), true};
-    dataConfig.forwardHublabelOffset = { folderName + "/forwardHubLabelOffset", hlStore.getForwardLabels().size(), false};
-    dataConfig.backwardHublabelOffset = {folderName + "/backwardHubLabelOffset", hlStore.getBackwardOffset().size(), false};
+    dataConfig.forwardHublabels = {"forwardHubLabels", hlStore.getForwardLabels().size(), true};
+    dataConfig.backwardHublabels = { "backwardHubLabels", hlStore.getBackwardLabels().size(), true};
+    dataConfig.forwardHublabelOffset = { "forwardHubLabelOffset", hlStore.getForwardLabels().size(), false};
+    dataConfig.backwardHublabelOffset = {"backwardHubLabelOffset", hlStore.getBackwardOffset().size(), false};
 
     // write hub label files
     Static::writeVectorToFile(hlStore.getForwardLabels(), dataConfig.forwardHublabels.path.c_str());
@@ -79,6 +108,5 @@ int main(int argc, char* argv[]) {
     std::ofstream out(folderName + "/config.json");
     out << dataConfig.toJson();
     out.close();
-
     return 0;
 }

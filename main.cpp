@@ -83,10 +83,11 @@ int main(int argc, char* argv[]) {
     pathFinder::GraphReader::readCHFmiFile(chGraph, filepath, gridReorder);
     pathFinder::ChHlBenchmarker bm(chGraph);
     pathFinder::Timer timer;
+    pathFinder::CellIdStore cellIdStore(chGraph.edges.size());
 
     switch(algorithmType){
         case hybrid:{
-            pathFinder::HubLabels hl(chGraph, level, timer);
+            pathFinder::HubLabels hl(chGraph, level, timer, cellIdStore);
             if(memoryType == disk) {
                 std::cout << "writing to disk" << std::endl;
                 auto& ramHlStore = hl.getHublabelStore();
@@ -98,7 +99,7 @@ int main(int argc, char* argv[]) {
                 auto mmapForwardLabels = pathFinder::MmapVector(ramHlStore.getForwardLabels(), "forwardLabels");
                 auto mmapBackwardLabels = pathFinder::MmapVector(ramHlStore.getBackwardLabels(), "backwardLabels");
                 pathFinder::HubLabelStore diskHlStore(mmapForwardLabels, mmapBackwardLabels, ramHlStore.getForwardOffset(), ramHlStore.getBackwardOffset());
-                pathFinder::HubLabels diskHl(diskGraph, level, diskHlStore, timer);
+                pathFinder::HubLabels diskHl(diskGraph, level, diskHlStore, timer, cellIdStore);
                 ramHlStore.getBackwardLabels().clear();
                 ramHlStore.getBackwardLabels().shrink_to_fit();
                 ramHlStore.getForwardLabels().clear();
