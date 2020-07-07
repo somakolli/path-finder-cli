@@ -10,22 +10,32 @@
 #include <fcntl.h>
 #include <fstream>
 #include <path_finder/CellIdStore.h>
+#include <path_finder/HubLabelCreator.h>
+#include <path_finder/HybridPathFinder.h>
 #include <streambuf>
 #include <string>
 
 void loop(std::vector<pathFinder::PathFinderBase*> pathFinders) {
     while(true) {
-        std::cout << "source: ";
-        pathFinder::NodeId source;
-        std::cin >> source;
-        pathFinder::NodeId target;
-        std::cout << "target: ";
-        std::cin >> target;
+        std::cout << "sourceLat: ";
+        float sourceLat;
+        std::cin >> sourceLat;
+        std::cout << "sourceLng: ";
+        float sourceLng;
+        std::cin >> sourceLng;
+        float targetLat;
+        std::cout << "targetLat: ";
+        std::cin >> targetLat;
+        float targetLng;
+        std::cout << "targetLng: ";
+        std::cin >> targetLng;
+        pathFinder::LatLng source = {sourceLat, sourceLng};
+        pathFinder::LatLng target = {targetLat, targetLng};
         for(auto pathFinder : pathFinders) {
             auto start = std::chrono::high_resolution_clock::now();
-            auto distance = pathFinder->getShortestDistance(source, target);
+            std::optional<pathFinder::Distance> distance;
             std::vector<unsigned int> cellIds;
-            auto path = pathFinder->getShortestPath(source, target, &cellIds);
+            auto path = pathFinder->getShortestPath(158273, 27628, distance, &cellIds);
             std::cout << cellIds.size() << '\n';
             if(!distance.has_value())
                 std::cerr << "source or target not found" << std::endl;
@@ -36,11 +46,13 @@ void loop(std::vector<pathFinder::PathFinderBase*> pathFinders) {
             std::cout << "Elapsed time: " << elapsed.count() << " µs\n";
         }
 
-
+        /**
         int fd = ::open("/proc/sys/vm/drop_caches", O_WRONLY);
         if (2 != ::write(fd, "1\n", 2)) {
             throw std::runtime_error("Benchmarker: could not drop caches");
         }
+        */
+
 
     }
 };
@@ -86,8 +98,7 @@ int main(int argc, char* argv[]) {
         std::cout << "gridMap size: " << chGraph.gridMap.size() << std::endl;
 
         pathFinder::HubLabelStore hubLabelStore(forwardHublabels, backwardHublabels, forwardHublabelOffset, backwardHublabelOffset);
-        pathFinder::Timer timer;
-        pathFinder::HubLabels hl(chGraph, config.calculatedUntilLevel, hubLabelStore, timer, cellIdStore);
+        pathFinder::HybridPathFinder hl(hubLabelStore, chGraph, cellIdStore, config.calculatedUntilLevel);
 
         loop({&hl});
     } else {
@@ -111,10 +122,9 @@ int main(int argc, char* argv[]) {
 
         std::cout << "gridMap size: " << chGraph.gridMap.size() << std::endl;
 
-        pathFinder::HubLabelStore hubLabelStore(forwardHublabels, backwardHublabels, forwardHublabelOffset, backwardHublabelOffset);
         pathFinder::CellIdStore cellIdStore(cellIds, cellIdsOffset);
-        pathFinder::Timer timer;
-        pathFinder::HubLabels hl(chGraph, config.calculatedUntilLevel, hubLabelStore, timer, cellIdStore);
+        pathFinder::HubLabelStore hubLabelStore(forwardHublabels, backwardHublabels, forwardHublabelOffset, backwardHublabelOffset);
+        pathFinder::HybridPathFinder hl(hubLabelStore, chGraph, cellIdStore, config.calculatedUntilLevel);
 
         loop({&hl});
     }

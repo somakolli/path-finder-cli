@@ -4,11 +4,12 @@
 #include "path_finder/CHGraph.h"
 #include "path_finder/DataConfig.h"
 #include "path_finder/GraphReader.h"
-#include "path_finder/HubLabels.h"
 #include "path_finder/Static.h"
-#include <path_finder/OscarIntegration.h>
 #include <liboscar/StaticOsmCompleter.h>
 #include <liboscar/routing/support/Edge2CellIds.h>
+#include <path_finder/HubLabelCreator.h>
+#include <path_finder/OscarIntegration.h>
+#include <path_finder/Timer.h>
 #include <string>
 
 int main(int argc, char* argv[]) {
@@ -87,9 +88,9 @@ int main(int argc, char* argv[]) {
     Static::writeVectorToFile(cellIdStore.offsetVec(), dataConfig.cellIdsOffset.path.c_str());
 
     // construct hub labels
-    pathFinder::Timer timer;
-    pathFinder::HubLabels hubLabels(chGraph, level, timer, cellIdStore);
-    auto& hlStore = hubLabels.getHublabelStore();
+    pathFinder::HubLabelStore hlStore(dataConfig.numberOfNodes);
+    pathFinder::HubLabelCreator hubLabelCreator(chGraph, hlStore);
+    hubLabelCreator.create(level);
     std::cout << hlStore.getForwardLabels().size() << std::endl;
     // set hub label config values
     dataConfig.calculatedUntilLevel = level;
