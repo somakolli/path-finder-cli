@@ -1,22 +1,25 @@
 //
 // Created by sokol on 31.03.20.
 //
-#include "path_finder/CHDijkstra.h"
-#include "path_finder/CHGraph.h"
-#include "path_finder/DataConfig.h"
-#include "path_finder/PathFinderBase.h"
-#include "path_finder/Static.h"
+#include "path_finder/graphs/CHGraph.h"
+#include "path_finder/helper/Static.h"
+#include "path_finder/routing/CHDijkstra.h"
+#include "path_finder/routing/PathFinderBase.h"
+#include "path_finder/storage/DataConfig.h"
+#include "vendor/oscar-routing/vendor/liboscar/include/liboscar/StaticOsmCompleter.h"
 #include <chrono>
 #include <fcntl.h>
 #include <fstream>
-#include <path_finder/CellIdStore.h>
-#include <path_finder/HubLabelCreator.h>
-#include <path_finder/HybridPathFinder.h>
+#include <path_finder/routing/HubLabelCreator.h>
+#include <path_finder/routing/HybridPathFinder.h>
+#include <path_finder/storage/CellIdStore.h>
+#include <path_finder/storage/FileLoader.h>
 #include <streambuf>
 #include <string>
 
-void loop(std::vector<pathFinder::PathFinderBase*> pathFinders) {
+void loop(std::vector<std::shared_ptr<pathFinder::PathFinderBase>> pathFinders) {
     while(true) {
+      /*
         std::cout << "sourceLat: ";
         float sourceLat;
         std::cin >> sourceLat;
@@ -31,19 +34,44 @@ void loop(std::vector<pathFinder::PathFinderBase*> pathFinders) {
         std::cin >> targetLng;
         pathFinder::LatLng source = {sourceLat, sourceLng};
         pathFinder::LatLng target = {targetLat, targetLng};
+        */
+
         for(auto pathFinder : pathFinders) {
-            auto start = std::chrono::high_resolution_clock::now();
-            std::optional<pathFinder::Distance> distance;
-            std::vector<unsigned int> cellIds;
-            auto path = pathFinder->getShortestPath(158273, 27628, distance, &cellIds);
-            std::cout << cellIds.size() << '\n';
-            if(!distance.has_value())
-                std::cerr << "source or target not found" << std::endl;
-            else
-                std::cout << "Distance: " << distance.value() << std::endl;
-            auto finish = std::chrono::high_resolution_clock::now();
-            auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
-            std::cout << "Elapsed time: " << elapsed.count() << " µs\n";
+          liboscar::Static::OsmCompleter cmp;
+          std::cout << "reading oscar files..." << std::endl;
+          cmp.setAllFilesFromPrefix("stgt");
+          try {
+            cmp.energize();
+          }
+          catch (std::exception const & e) {
+            std::cerr << "Error: " << e.what() << std::endl;
+          }
+
+
+          auto start = std::chrono::high_resolution_clock::now();
+          auto routingResult = pathFinder->getShortestPath(pathFinder::LatLng{48.758834048201095, 9.141569137573244}, pathFinder::LatLng{48.758940139629686, 9.141751527786257});
+          std::cout << routingResult.path.size() << '\n';
+          if(!routingResult.distance)
+              std::cerr << "source or target not found" << std::endl;
+          else
+              std::cout << "Distance: " << routingResult.distance << std::endl;
+          auto store = cmp.store();
+          int itemCount = 0;
+          for(auto cellId : routingResult.cellIds) {
+            auto cell = store.geoHierarchy().cell(cellId);
+            auto ptr = cell.itemPtr();
+            auto size = cell.itemCount();
+            auto boundary = cell.boundary();
+            bool containsOnePoint = false;
+            for(auto point: routingResult.path) {
+              if(boundary.contains(point.lat, point.lng))
+                containsOnePoint = true;
+            }
+
+            itemCount += size;
+          }
+          auto finish = std::chrono::high_resolution_clock::now();
+          auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
         }
 
         /**
@@ -58,7 +86,7 @@ void loop(std::vector<pathFinder::PathFinderBase*> pathFinders) {
 };
 int main(int argc, char* argv[]) {
     std::string configFolder;
-    bool ram = false;
+    bool ram = true;
     for(int i = 1; i < argc; ++i) {
         std::string option = argv[i];
         if(option == "-f")
@@ -67,15 +95,9 @@ int main(int argc, char* argv[]) {
             ram = true;
     }
 
-    // read config
-    std::ifstream t(configFolder + "/config.json");
-    std::string str((std::istreambuf_iterator<char>(t)),
-                    std::istreambuf_iterator<char>());
-    auto config = pathFinder::DataConfig::getFromFile(str);
-    std::cout << "read config" << std::endl;
-
 
     if(!ram) {
+      /*
       using namespace pathFinder;
         auto nodes = Static::getFromFileMMap<CHNode>(config.nodes, configFolder);
         auto forwardEdges = Static::getFromFileMMap<CHEdge>(config.forwardEdges, configFolder);
@@ -98,35 +120,13 @@ int main(int argc, char* argv[]) {
         std::cout << "gridMap size: " << chGraph.gridMap.size() << std::endl;
 
         pathFinder::HubLabelStore hubLabelStore(forwardHublabels, backwardHublabels, forwardHublabelOffset, backwardHublabelOffset);
-        pathFinder::HybridPathFinder hl(hubLabelStore, chGraph, cellIdStore, config.calculatedUntilLevel);
+        auto hl =  std::make_shared<FileLoader::HybridPF>(HybridPathFinder(hubLabelStore, chGraph, cellIdStore, config.calculatedUntilLevel));
 
-        loop({&hl});
+        loop({hl});
+        */
     } else {
-        auto nodes = pathFinder::Static::getFromFile<pathFinder::CHNode>(config.nodes, configFolder);
-        auto forwardEdges = pathFinder::Static::getFromFile<pathFinder::CHEdge>(config.forwardEdges, configFolder);
-        auto backwardEdges = pathFinder::Static::getFromFile<pathFinder::CHEdge>(config.backwardEdges, configFolder);
-        auto forwardOffset = pathFinder::Static::getFromFile<pathFinder::NodeId>(config.forwardOffset, configFolder);
-        auto backwardOffset = pathFinder::Static::getFromFile<pathFinder::NodeId>(config.backwardOffset, configFolder);
-        auto forwardHublabels = pathFinder::Static::getFromFile<pathFinder::CostNode>(config.forwardHublabels, configFolder);
-        auto backwardHublabels = pathFinder::Static::getFromFile<pathFinder::CostNode>(config.backwardHublabels, configFolder);
-        auto forwardHublabelOffset = pathFinder::Static::getFromFile<pathFinder::OffsetElement>(config.forwardHublabelOffset, configFolder);
-        auto backwardHublabelOffset = pathFinder::Static::getFromFile<pathFinder::OffsetElement>(config.backwardHublabelOffset, configFolder);
-        auto cellIds = pathFinder::Static::getFromFileMMap<pathFinder::CellId_t>(config.cellIds, configFolder);
-        auto cellIdsOffset = pathFinder::Static::getFromFileMMap<pathFinder::OffsetElement>(config.cellIdsOffset, configFolder);
-        pathFinder::CHGraph chGraph(nodes, forwardEdges, backwardEdges, forwardOffset, backwardOffset, config.numberOfNodes);
-
-        // set up grid
-        for(auto gridEntry : config.gridMapEntries) {
-            chGraph.gridMap[gridEntry.latLng] = gridEntry.pointerPair;
-        }
-
-        std::cout << "gridMap size: " << chGraph.gridMap.size() << std::endl;
-
-        pathFinder::CellIdStore cellIdStore(cellIds, cellIdsOffset);
-        pathFinder::HubLabelStore hubLabelStore(forwardHublabels, backwardHublabels, forwardHublabelOffset, backwardHublabelOffset);
-        pathFinder::HybridPathFinder hl(hubLabelStore, chGraph, cellIdStore, config.calculatedUntilLevel);
-
-        loop({&hl});
+        auto hl = pathFinder::FileLoader::loadHubLabelsShared(configFolder);
+        loop({hl});
     }
 
     //pathFinder::CHDijkstra  ch(chGraph);
