@@ -33,14 +33,15 @@ int main(int argc, char *argv[]) {
       outPutPath = argv[++i];
   }
 
+
   liboscar::Static::OsmCompleter cmp;
   // setup stores
-  pathFinder::CHGraph chGraph;
+  auto chGraph = std::make_shared<pathFinder::CHGraph>();
 
   pathFinder::GraphReader::readCHFmiFile(chGraph, filepath, gridReorder);
 
   // read cellIds
-  pathFinder::CellIdStore<pathFinder::CellId_t> cellIdStore(chGraph.m_edges.size());
+  auto cellIdStore = std::make_shared<pathFinder::CellIdStore>(chGraph->getNumberOfEdges());
   if (!oscarFilePath.empty()) {
     std::cout << "reading oscar files..." << std::endl;
     cmp.setAllFilesFromPrefix(oscarFilePath);
@@ -51,22 +52,21 @@ int main(int argc, char *argv[]) {
       return -1;
     }
     pathFinder::OscarIntegrator::writeCellIdsForEdges<sserialize::spatial::GeoPoint>(
-        chGraph, liboscar::routing::support::Edge2CellIds(cmp.store()), pathFinder::CellIdDiskWriter(cellIdStore),
+        *chGraph, liboscar::routing::support::Edge2CellIds(cmp.store()), pathFinder::CellIdDiskWriter(*cellIdStore),
         cmp.store());
   }
 
-  auto cellIdStorePtr = &cellIdStore;
   if(oscarFilePath.empty())
-    cellIdStorePtr = nullptr;
+    cellIdStore = nullptr;
 
 
   // construct hub labels
-  auto hlStore =  std::make_shared<pathFinder::HubLabelStore>(chGraph.getNodes().size());
+  auto hlStore =  std::make_shared<pathFinder::HubLabelStore>(chGraph->getNumberOfNodes());
   if(level > -1) {
     pathFinder::HubLabelCreator hubLabelCreator(chGraph, hlStore);
     hubLabelCreator.create(level);
   }
-  pathFinder::FileWriter::writeAll(&chGraph, hlStore.get(), cellIdStorePtr, outPutPath);
+  pathFinder::FileWriter::writeAll(chGraph, hlStore, cellIdStore, outPutPath);
 
   return 0;
 }
