@@ -1,4 +1,4 @@
-build/*
+*build*/*
 .idea/*
 .kdev4/*
 cmake-build-debug/*
