@@ -2,13 +2,10 @@
 // Created by sokol on 31.03.20.
 //
 #include "path_finder/graphs/CHGraph.h"
-#include "path_finder/helper/Static.h"
-#include "path_finder/storage/DataConfig.h"
 #include "path_finder/storage/GraphReader.h"
 #include <liboscar/StaticOsmCompleter.h>
 #include <liboscar/routing/support/Edge2CellIds.h>
 #include <path_finder/helper/OscarIntegration.h>
-#include <path_finder/helper/Timer.h>
 #include <path_finder/routing/HubLabelCreator.h>
 #include <path_finder/storage/FileWriter.h>
 #include <string>
