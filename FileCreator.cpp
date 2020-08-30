@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
       return -1;
     }
     pathFinder::OscarIntegrator::writeCellIdsForEdges<sserialize::spatial::GeoPoint>(
-        *chGraph, liboscar::routing::support::Edge2CellIds(cmp.store()), pathFinder::CellIdDiskWriter(*cellIdStore),
+        *chGraph, liboscar::routing::support::Edge2CellIds(cmp.store()), *cellIdStore,
         cmp.store());
   }
 
