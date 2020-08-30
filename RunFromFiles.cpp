@@ -104,10 +104,10 @@ int main(int argc, char* argv[]) {
         auto backwardEdges = Static::getFromFileMMap<CHEdge>(config.backwardEdges, configFolder);
         auto forwardOffset = Static::getFromFileMMap<NodeId>(config.forwardOffset, configFolder);
         auto backwardOffset = Static::getFromFileMMap<NodeId>(config.backwardOffset, configFolder);
-        auto forwardHublabels = Static::getFromFileMMap<CostNode>(config.forwardHublabels, configFolder);
+        auto forwardHubLabels = Static::getFromFileMMap<CostNode>(config.forwardHubLabels, configFolder);
         auto backwardHublabels = Static::getFromFileMMap<CostNode>(config.backwardHublabels, configFolder);
         auto forwardHublabelOffset = Static::getFromFileMMap<OffsetElement>(config.forwardHublabelOffset, configFolder);
-        auto backwardHublabelOffset = Static::getFromFileMMap<OffsetElement>(config.backwardHublabelOffset, configFolder);
+        auto backwardHubLabelOffset = Static::getFromFileMMap<OffsetElement>(config.backwardHubLabelOffset, configFolder);
         auto cellIds = Static::getFromFileMMap<CellId_t>(config.cellIds, configFolder);
         auto cellIdsOffset = Static::getFromFileMMap<OffsetElement>(config.cellIdsOffset, configFolder);
         CHGraph chGraph(nodes, forwardEdges, backwardEdges, forwardOffset, backwardOffset, config.numberOfNodes);
@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
 
         std::cout << "gridMap size: " << chGraph.gridMap.size() << std::endl;
 
-        pathFinder::HubLabelStore hubLabelStore(forwardHublabels, backwardHublabels, forwardHublabelOffset, backwardHublabelOffset);
+        pathFinder::HubLabelStore hubLabelStore(forwardHubLabels, backwardHublabels, forwardHublabelOffset, backwardHubLabelOffset);
         auto hl =  std::make_shared<FileLoader::HybridPF>(HybridPathFinder(hubLabelStore, chGraph, cellIdStore, config.calculatedUntilLevel));
 
         loop({hl});
