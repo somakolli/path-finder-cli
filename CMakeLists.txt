@@ -10,7 +10,7 @@ endif()
 add_subdirectory(vendor/path_finder)
 add_subdirectory(vendor/oscar-routing)
 
-add_executable(file_creator FileCreator.cpp)
+add_executable(file_creator FileCreator.cpp CLI11.hpp)
 add_executable(run_from_files RunFromFiles.cpp)
 
 target_link_libraries(file_creator path_finder oscar-routing)

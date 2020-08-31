@@ -9,33 +9,32 @@
 #include <path_finder/routing/HubLabelCreator.h>
 #include <path_finder/storage/FileWriter.h>
 #include <string>
+#include "CLI11.hpp"
 
 int main(int argc, char *argv[]) {
-  std::string filepath;
-  std::string oscarFilePath;
-  std::string outPutPath = "data";
-  int level = -1;
-  bool gridReorder = false;
-  for (int i = 1; i < argc; ++i) {
-    std::string option = argv[i];
-    if (option == "-f")
-      filepath = argv[++i];
-    else if (option == "-l")
-      level = std::stoi(argv[++i]);
-    else if (option == "-gridReorder")
-      gridReorder = true;
-    else if (option == "-oscarFiles")
-      oscarFilePath = argv[++i];
-    else if (option == "-out")
-      outPutPath = argv[++i];
-  }
+  CLI::App app("routing-file-creator");
 
+  std::string graphFilePath;
+  app.add_option("-f, --graph", graphFilePath, "Path to a graph file in ch-fmi format.")->required();
+
+  std::string oscarFilePath;
+  app.add_option("-s, --oscarFilePath", oscarFilePath, "Path to oscar data for cell id store generation.");
+
+  int level = -1;
+  app.add_option("-l, --level",level, "CH-Level at which the hub label generation will break.");
+
+  std::string outPutPath;
+  app.add_option("-o, --out", outPutPath, "Output path.")->required();
+
+  bool gridReorder = true;
+
+  CLI11_PARSE(app, argc, argv);
 
   liboscar::Static::OsmCompleter cmp;
   // setup stores
   auto chGraph = std::make_shared<pathFinder::CHGraph>();
 
-  pathFinder::GraphReader::readCHFmiFile(chGraph, filepath, gridReorder);
+  pathFinder::GraphReader::readCHFmiFile(chGraph, graphFilePath, gridReorder);
 
   // read cellIds
   auto cellIdStore = std::make_shared<pathFinder::CellIdStore>(chGraph->getNumberOfEdges());
