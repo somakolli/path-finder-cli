@@ -7,6 +7,14 @@ if( NOT CMAKE_BUILD_TYPE )
     set( CMAKE_BUILD_TYPE Release)
 endif()
 
+set(CMAKE_MODULE_PATH
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/
+        ${CMAKE_CURRENT_SOURCE_DIR}/vendor/liboscar/cmake/
+        ${CMAKE_CURRENT_SOURCE_DIR}/vendor/liboscar/vendor/sserialize/cmake/
+        )
+include(add_buildtype_lto)
+include(add_buildtype_ultra)
+
 add_subdirectory(vendor/path_finder)
 add_subdirectory(vendor/oscar-routing)
 

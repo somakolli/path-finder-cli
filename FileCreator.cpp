@@ -30,6 +30,7 @@ int main(int argc, char *argv[]) {
 
   CLI11_PARSE(app, argc, argv);
 
+  std::cout << graphFilePath << '\n';
   liboscar::Static::OsmCompleter cmp;
   // setup stores
   auto chGraph = std::make_shared<pathFinder::CHGraph>();
