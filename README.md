@@ -7,7 +7,9 @@ git clone --recursive https://github.com/somakolli/path-finder-cli
 cd path-finder-cli
 mkdir build && cd build
 CMAKE_GCC_VERSION_FOR_LTO=9 cmake ../ -DCMAKE_BUILD_TYPE=ultra
+make
 ```
+If you use gcc-10 you have to set your GCC_VERSION_FOR_LTO to 10.
 ### Executing:
 
 The executable to create the files is called file_creator.
