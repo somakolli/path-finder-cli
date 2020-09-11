@@ -59,11 +59,13 @@ int main(int argc, char *argv[]) {
 
   // construct hub labels
   auto hlStore =  std::make_shared<pathFinder::HubLabelStore>(chGraph->getNumberOfNodes());
+  pathFinder::SpaceMeasurer spaceMeasurer;
   if(level > -1) {
     pathFinder::HubLabelCreator hubLabelCreator(chGraph, hlStore);
     hubLabelCreator.create(level);
+    spaceMeasurer = hubLabelCreator.spaceMeasurer;
   }
-  pathFinder::FileWriter::writeAll(chGraph, hlStore, cellIdStore, outPutPath);
+  pathFinder::FileWriter::writeAll(chGraph, hlStore, cellIdStore, outPutPath, &spaceMeasurer);
 
   return 0;
 }
