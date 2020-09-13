@@ -48,8 +48,8 @@ int main(int argc, char *argv[]) {
       std::cerr << "Error: " << e.what() << std::endl;
       return -1;
     }
-    pathFinder::OscarIntegrator::writeCellIdsForEdges<sserialize::spatial::GeoPoint>(
-        *chGraph, liboscar::routing::support::Edge2CellIds(cmp.store()), *cellIdStore,
+    pathFinder::OscarIntegrator::writeCellIdsForEdges<sserialize::spatial::GeoPoint, liboscar::routing::support::Edge2CellIds>(
+        *chGraph, *cellIdStore,
         cmp.store());
   }
 
