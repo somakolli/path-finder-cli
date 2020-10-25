@@ -1,0 +1,20 @@
+#Run with docker-compose run path-finder-cli (gdb|valgrind|ultra|asan)
+version: '3.6'
+
+services:
+  path-finder-cli:
+    build: ./src/
+    image: path-finder-cli:latest
+    volumes:
+    #Configs are not supported in local mode
+    - ${PWD}/graph.txt:/graph.txt
+    - ${PWD}/../:/src
+    shm_size: 4G
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp=unconfined
+    environment:
+      - USE_DEBUGGER=enabled
+    stdin_open: true
+    tty: true
