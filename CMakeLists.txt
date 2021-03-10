@@ -14,7 +14,7 @@ set(CMAKE_MODULE_PATH
         )
 include(add_buildtype_lto)
 include(add_buildtype_ultra)
-
+add_subdirectory(benchmarks)
 add_subdirectory(vendor/path_finder)
 add_subdirectory(vendor/oscar-routing)
 
