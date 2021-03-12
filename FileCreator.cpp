@@ -9,6 +9,7 @@
 #include <path_finder/routing/HubLabelCreator.h>
 #include <path_finder/storage/FileWriter.h>
 #include <string>
+#include <iostream>
 #include "CLI11.hpp"
 
 int main(int argc, char *argv[]) {
@@ -25,6 +26,9 @@ int main(int argc, char *argv[]) {
 
   std::string outPutPath;
   app.add_option("-o, --out", outPutPath, "Output path.")->required();
+  
+  std::size_t numThreads{1};
+  app.add_option("-t, --threads", numThreads, "Number of threads to use");
 
   bool gridReorder = true;
 
@@ -35,6 +39,7 @@ int main(int argc, char *argv[]) {
   // setup stores
   auto chGraph = std::make_shared<pathFinder::CHGraph>();
 
+  std::cout << "Reading ch file" << std::endl;
   pathFinder::GraphReader::readCHFmiFile(chGraph, graphFilePath, gridReorder);
 
   // read cellIds
@@ -48,9 +53,12 @@ int main(int argc, char *argv[]) {
       std::cerr << "Error: " << e.what() << std::endl;
       return -1;
     }
+    std::cout << "Mapping edges to cell ids" << std::endl;
     pathFinder::OscarIntegrator::writeCellIdsForEdges<sserialize::spatial::GeoPoint, liboscar::routing::support::Edge2CellIds>(
         *chGraph, *cellIdStore,
-        cmp.store());
+        cmp.store(),
+		numThreads
+	);
   }
 
   if(oscarFilePath.empty())
@@ -61,11 +69,14 @@ int main(int argc, char *argv[]) {
   auto hlStore =  std::make_shared<pathFinder::HubLabelStore>(chGraph->getNumberOfNodes());
   pathFinder::SpaceMeasurer spaceMeasurer;
   if(level > -1) {
+    std::cout << "Generating hub labels" << std::endl;
     pathFinder::HubLabelCreator hubLabelCreator(chGraph, hlStore);
     hubLabelCreator.create(level);
     spaceMeasurer = hubLabelCreator.spaceMeasurer;
   }
+  std::cout << "Writing data to files" << std::endl;
   pathFinder::FileWriter::writeAll(chGraph, hlStore, cellIdStore, outPutPath, &spaceMeasurer);
 
+  std::cout << "Finished all operations. Exiting.";
   return 0;
 }
