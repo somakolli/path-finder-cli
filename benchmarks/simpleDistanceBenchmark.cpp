@@ -23,10 +23,12 @@ auto main(int argc, char* argv[]) -> int {
   app.add_flag("-d, --chDijkstra", chDijkstra, "benchmark only dijkstra and print the result to output");
   bool interactive = false;
   app.add_flag("-i, --interactive", interactive, "do an interactive benchmark");
+  bool allToAll = false;
+  app.add_flag("-l, --allToAll", allToAll, "do an all to all calculation");
   CLI11_PARSE(app, argc, argv);
 
-  if(!hybrid && !chDijkstra && !interactive) {
-    std::cout << "please add either the chDijkstra, the hybrid or the interactive flag" << '\n';
+  if(!hybrid && !chDijkstra && !interactive && !allToAll) {
+    std::cout << "please add either the chDijkstra, the hybrid, the interactive flag or the allToAll flag" << '\n';
   }
 
   if(hybrid && outputPath.empty() || chDijkstra && outputPath.empty()) {
@@ -60,6 +62,34 @@ auto main(int argc, char* argv[]) -> int {
     plotOutputFile.open (outputPath);
     pathFinder::Benchmarker::printRoutingResultForOctave(plotOutputFile, result);
     plotOutputFile.close();
+  }
+
+  if(allToAll) {
+    double time = 0;
+    auto hubLabels = pathFinder::FileLoader::loadHubLabelsShared(routingDataPath);
+    pathFinder::Stopwatch stopwatch;
+    /*
+    for(auto  node : hubLabels->getGraph()->getNodes()) {
+      for(auto otherNode : hubLabels->getGraph()->getNodes()) {
+        try {
+          auto result = hubLabels->getShortestDistance(node.id, otherNode.id);
+        } catch (std::runtime_error& e) {
+
+        }
+      }
+    }
+    */
+    int biggestLabel = 0;
+    int sum = 0;
+    for(auto node : hubLabels->getGraph()->getNodes()) {
+      auto label = hubLabels->getHubLabelStore()->retrieve(node.id, pathFinder::FORWARD);
+      sum += label.size();
+      if(label.size() > biggestLabel)
+        biggestLabel = label.size();
+    }
+    std::cout << hubLabels->getGraph()->getNumberOfNodes() << '\n';
+    std::cout << sum / hubLabels->getGraph()->getNumberOfNodes() << '\n';
+    std::cout << biggestLabel << '\n';
   }
 
   return 0;
