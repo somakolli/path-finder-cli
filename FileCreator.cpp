@@ -3,9 +3,11 @@
 //
 #include "path_finder/graphs/CHGraph.h"
 #include "path_finder/storage/GraphReader.h"
+#ifdef WITH_OSCAR
 #include <liboscar/StaticOsmCompleter.h>
 #include <liboscar/routing/support/Edge2CellIds.h>
 #include <path_finder/helper/OscarIntegration.h>
+#endif
 #include <path_finder/routing/HubLabelCreator.h>
 #include <path_finder/storage/FileWriter.h>
 #include <string>
@@ -35,13 +37,14 @@ int main(int argc, char *argv[]) {
   CLI11_PARSE(app, argc, argv);
 
   std::cout << graphFilePath << '\n';
-  liboscar::Static::OsmCompleter cmp;
   // setup stores
   auto chGraph = std::make_shared<pathFinder::CHGraph>();
 
   std::cout << "Reading ch file" << std::endl;
   pathFinder::GraphReader::readCHFmiFile(chGraph, graphFilePath, gridReorder);
 
+#ifdef WITH_OSCAR
+    liboscar::Static::OsmCompleter cmp;
   // read cellIds
   auto cellIdStore = std::make_shared<pathFinder::CellIdStore>(chGraph->getNumberOfEdges());
   if (!oscarFilePath.empty()) {
@@ -63,7 +66,9 @@ int main(int argc, char *argv[]) {
 
   if(oscarFilePath.empty())
     cellIdStore = nullptr;
-
+#else
+  auto cellIdStore = nullptr;
+#endif
 
   // construct hub labels
   auto hlStore =  std::make_shared<pathFinder::HubLabelStore>(chGraph->getNumberOfNodes());

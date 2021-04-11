@@ -6,7 +6,9 @@
 #include "path_finder/routing/CHDijkstra.h"
 #include "path_finder/routing/PathFinderBase.h"
 #include "path_finder/storage/DataConfig.h"
+#ifdef WITH_OSCAR
 #include "vendor/oscar-routing/vendor/liboscar/include/liboscar/StaticOsmCompleter.h"
+#endif
 #include <chrono>
 #include <fcntl.h>
 #include <fstream>
@@ -37,6 +39,7 @@ void loop(std::vector<std::shared_ptr<pathFinder::PathFinderBase>> pathFinders) 
         */
 
         for(auto pathFinder : pathFinders) {
+#ifdef WITH_OSCAR
           liboscar::Static::OsmCompleter cmp;
           std::cout << "reading oscar files..." << std::endl;
           cmp.setAllFilesFromPrefix("stgt");
@@ -46,8 +49,8 @@ void loop(std::vector<std::shared_ptr<pathFinder::PathFinderBase>> pathFinders) 
           catch (std::exception const & e) {
             std::cerr << "Error: " << e.what() << std::endl;
           }
-
-
+          auto store = cmp.store();
+#endif
           auto start = std::chrono::high_resolution_clock::now();
           auto routingResult = pathFinder->getShortestPath(pathFinder::LatLng{48.758834048201095, 9.141569137573244}, pathFinder::LatLng{48.758940139629686, 9.141751527786257});
           std::cout << routingResult.path.size() << '\n';
@@ -55,8 +58,8 @@ void loop(std::vector<std::shared_ptr<pathFinder::PathFinderBase>> pathFinders) 
               std::cerr << "source or target not found" << std::endl;
           else
               std::cout << "Distance: " << routingResult.distance << std::endl;
-          auto store = cmp.store();
           int itemCount = 0;
+#ifdef WITH_OSCAR
           for(auto cellId : routingResult.cellIds) {
             auto cell = store.geoHierarchy().cell(cellId);
             auto ptr = cell.itemPtr();
@@ -70,6 +73,7 @@ void loop(std::vector<std::shared_ptr<pathFinder::PathFinderBase>> pathFinders) 
 
             itemCount += size;
           }
+#endif
           auto finish = std::chrono::high_resolution_clock::now();
           auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
         }
