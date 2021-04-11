@@ -10,6 +10,11 @@ CMAKE_GCC_VERSION_FOR_LTO=9 cmake ../ -DCMAKE_BUILD_TYPE=ultra
 make
 ```
 If you use gcc-10 you have to set your GCC_VERSION_FOR_LTO to 10.
+
+#### OSCAR Integration
+If you want to to also calculate oscar cell ids for each edge please set in the CMakeLists.txt (l. 6) file the variable
+WITH_OSCAR to 1 before building.
+
 ### Generating Files:
 
 The executable to create the files is called file_creator.
@@ -44,6 +49,7 @@ But keep in mind that the calculation for graphs with many edges can take a long
 europe 1 billion edges 2-3 days).
 
 If you just want to generate routing files, you can just omit the oscarFilePath (-s).
+
 
 ### Benchmarking
 
